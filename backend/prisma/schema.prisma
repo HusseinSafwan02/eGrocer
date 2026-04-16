@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMINISTRATOR
+}
+
+enum OrderStatus {
+  PROCESSING
+  DISPATCHED
+  READY_FOR_PICKUP
+  DELIVERED
+  CANCELLED
+}
+
+enum FulfillmentType {
+  HOME_DELIVERY
+  WAREHOUSE_PICKUP
+}
+
+enum PromotionType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  BOGO
+}
+
+model User {
+  id                  Int            @id @default(autoincrement())
+  email               String         @unique
+  name                String
+  phone               String?
+  address             String?
+  passwordHash        String
+  passwordSalt        String
+  role                Role           @default(CUSTOMER)
+  failedLoginAttempts Int            @default(0)
+  lockedUntil         DateTime?
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  locale              String         @default("en")
+  createdAt           DateTime       @default(now())
+
+  orders        Order[]
+  cart          Cart?
+  notifications Notification[]
+}
+
+model Category {
+  id       Int        @id @default(autoincrement())
+  name     String
+  level    Int        // 1=Department, 2=Category, 3=Sub-category
+  parentId Int?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+  isActive Boolean    @default(true)
+}
+
+model Product {
+  id          Int        @id @default(autoincrement())
+  name        String
+  brand       String
+  description String?
+  price       Decimal    @db.Decimal(10, 2)
+  stockQty    Int        @default(0)
+  sizeWeight  String?
+  images      String[]
+  categoryId  Int
+  category    Category   @relation(fields: [categoryId], references: [id])
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  cartId    Int
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id          Int             @id @default(autoincrement())
+  userId      Int
+  user        User            @relation(fields: [userId], references: [id])
+  status      OrderStatus     @default(PROCESSING)
+  totalAmount Decimal         @db.Decimal(10, 2)
+  fulfillment FulfillmentType
+  address     String?
+  pickupTime  DateTime?
+  orderDate   DateTime        @default(now())
+
+  items      OrderItem[]
+  payment    Payment?
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+}
+
+model Payment {
+  id      Int       @id @default(autoincrement())
+  orderId Int       @unique
+  order   Order     @relation(fields: [orderId], references: [id])
+  method  String
+  amount  Decimal   @db.Decimal(10, 2)
+  status  String
+  txnRef  String    @unique
+  paidAt  DateTime?
+}
+
+model Promotion {
+  id        Int           @id @default(autoincrement())
+  name      String
+  type      PromotionType
+  value     Decimal       @db.Decimal(10, 2)
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean       @default(true)
+}
+
+model Notification {
+  id      Int      @id @default(autoincrement())
+  userId  Int?
+  user    User?    @relation(fields: [userId], references: [id])
+  orderId Int?
+  type    String
+  message String
+  sentAt  DateTime @default(now())
+}
