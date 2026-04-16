@@ -1,5 +1,6 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+const { collectCategoryIds } = require('../utils/category.utils');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -92,15 +93,5 @@ router.get('/:id', async (req, res, next) => {
     next(err);
   }
 });
-
-function collectCategoryIds(category) {
-  const ids = [category.id];
-  if (category.children) {
-    for (const child of category.children) {
-      ids.push(...collectCategoryIds(child));
-    }
-  }
-  return ids;
-}
 
 module.exports = router;

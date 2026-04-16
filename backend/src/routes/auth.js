@@ -1,20 +1,12 @@
 const express = require('express');
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
 const { authenticate } = require('../middleware/auth');
+const { hashPassword, generateSalt } = require('../utils/auth.utils');
 
 const router = express.Router();
 const prisma = new PrismaClient();
-
-function hashPassword(password, salt) {
-  return crypto.createHash('sha256').update(password + salt).digest('hex');
-}
-
-function generateSalt() {
-  return crypto.randomBytes(16).toString('hex');
-}
 
 function issueToken(user) {
   return jwt.sign(
