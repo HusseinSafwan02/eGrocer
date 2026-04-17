@@ -197,6 +197,8 @@ npm run db:setup          # Migrate + seed in one command
 From `backend/`:
 
 ```bash
+npm test                  # Run unit tests (Jest, verbose)
+npm run test:watch        # Run tests in watch mode
 npx prisma studio         # Open visual database browser at localhost:5555
 npx prisma migrate reset  # Wipe and re-create the database (dev only)
 ```

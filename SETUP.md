@@ -81,6 +81,17 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - `/login` — Login form
 - `/register` — Registration form
 
+## Running Tests
+
+From `backend/`:
+
+```bash
+npm test              # Run all unit tests (Jest, verbose)
+npm run test:watch    # Re-run tests on file changes
+```
+
+Test files live in `backend/tests/`.
+
 ## Next Iteration Ideas
 - Admin panel (catalogue management, order management)
 - Email notifications on order placement
